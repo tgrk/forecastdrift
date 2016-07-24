@@ -10,17 +10,10 @@
     <title>Forecast Drift on YR.NO</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="docroot/assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="docroot/assets/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="docroot/assets/bootstrap/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
+    <!-- Custom styles -->
     <link href="docroot/style.css" rel="stylesheet">
-
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><1script src="docroot/assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <script src="docroot/assets/bootstrap/js/ie-emulation-modes-warning.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -44,7 +37,7 @@
       </div>
 
       <div class="row marketing">
-        <h4>Hello World!</h4>
+        <span id="content"></span>
       </div>
 
       <footer class="footer">
@@ -52,7 +45,17 @@
       </footer>
 
     </div>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="docroot/assets/bootstrap/js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- deps -->
+    <script src="docroot/assets/jquery/dist/jquery.min.js"></script>
+    <script src="docroot/assets/lodash/dist/lodash.min.js"></script>
+    <script src="docroot/assets/d3/d3.min.js"></script>
+
+    <!-- app code -->
+    <script>
+      $(document).ready(function() {
+        $("content").html("Hello Wold!");
+      });
+    </script>
   </body>
 </html>

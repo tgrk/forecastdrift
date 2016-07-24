@@ -24,6 +24,7 @@ var (
 	httpPort   = flag.String("port", ":8080", "Listen port")
 	pollPeriod = flag.Duration("poll", 10*60*time.Second, "Poll period")
 	location   = flag.String("location", "Germany/Berlin/Berlin", "Location")
+	gzipMode   = flag.Bool("gzip", true, "GZip Compression")
 
 	// stores in memory as map with forecast day as a key
 	forecasts map[time.Time]DayForecast = make(map[time.Time]DayForecast)
@@ -56,9 +57,11 @@ func main() {
 
 	// Static page & assets
 	iris.StaticServe("docroot/assets/")
+	iris.Get("docroot/style.css", func(ctx *iris.Context) {
+		ctx.ServeFile("docroot/style.css", *gzipMode)
+	})
 	iris.Get("/", func(ctx *iris.Context) {
-		// gzip compression
-		ctx.ServeFile("docroot/index.html", false)
+		ctx.ServeFile("docroot/index.html", *gzipMode)
 	})
 
 	iris.Listen(*httpPort)
