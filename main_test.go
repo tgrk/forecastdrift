@@ -1,18 +1,54 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"os"
 	//	"net/http/httptest"
 	//	"strings"
-	"reflect"
+	//"reflect"
+	"os"
 	"testing"
 	//	"time"
 )
 
+func TestHistory(t *testing.T) {
+	var testPayload string = "Hello World!"
+
+	var history = new(ForecastHistory)
+	res := history.Store("Hello Brave New World!")
+	if res != nil {
+		t.Fatal("Unable to store payload!")
+	}
+
+	err := history.Load(&testPayload)
+	if err != nil {
+		t.Fatal("Unable to load stored payload!")
+	}
+
+	if testPayload != "Hello Brave New World!" {
+		t.Error("Unexpected value after restoring hisotry!")
+	}
+	if _, err := os.Stat(history.Path()); os.IsNotExist(err) {
+		t.Fatal("Unable to find storage file!", err)
+	}
+}
+
+func TestYrno(t *testing.T) {
+	var weather = new(Yrno)
+	//var updates []Update
+	var location string = "Germany/Berlin/Berlin"
+
+	updates, err := weather.Fetch(location)
+	if err != nil {
+		t.Fatal("Unable to fetch forecast for %s", location)
+	}
+	if updates == nil || len(updates) == 0 {
+		t.Fatal("No forecast data for %s", location)
+	}
+	t.Log(updates)
+}
+
 // statusHandler is an http.Handler that writes an empty response using itself
 // as the response status code.
+/*
 type statusHandler int
 
 func (h *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -26,17 +62,14 @@ func TestParseXml(t *testing.T) {
 	}
 	results := parseXml(r)
 
-	/*
 		if reflect.TypeOf(results).Kind() != reflect.slice {
 			log.Print("Not a slice")
 		}
-	*/
 	fmt.Println(reflect.TypeOf(results))
 	fmt.Println(reflect.TypeOf(results).Kind())
 	fmt.Println(reflect.TypeOf(results[0]))
 }
 
-/*
 func TestIntegration(t *testing.T) {
 	status := statusHandler(http.StatusNotFound)
 	ts := httptest.NewServer(&status)
