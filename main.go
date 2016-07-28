@@ -82,9 +82,8 @@ func getQueryDate(qs string) time.Time {
 			log.Print(err1)
 		}
 		return query
-	} else {
-		return time.Now()
 	}
+	return time.Now()
 }
 
 func maybeLogError(e error) {
