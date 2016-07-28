@@ -12,7 +12,7 @@ import (
 
 const baseURL = "http://www.yr.no/sted/%s/varsel.xml"
 
-type Yrno struct {
+type yrno struct {
 }
 
 // Store weather information by date with history of forecasted temperatures
@@ -23,6 +23,7 @@ type DayForecast struct {
 type Forecast struct {
 	History map[time.Time]int // contains forecasted temperature in time
 }
+
 type Update struct {
 	Updated     time.Time
 	Date        time.Time
@@ -31,13 +32,12 @@ type Update struct {
 }
 
 // Fetches latest weather forecast for given location
-func (weather Yrno) Fetch(location string) ([]Update, error) {
-	var xmlURL string = fmt.Sprintf(baseURL, location)
+func (weather yrno) Fetch(location string) ([]Update, error) {
+	xmlURL := fmt.Sprintf(baseURL, location)
 	log.Printf("Fetching XML data from %s...\n", xmlURL)
 
 	resp, err := http.Get(xmlURL)
 	if err != nil {
-		// handle error
 		log.Print(err)
 		return nil, err
 	}
@@ -50,21 +50,17 @@ func (weather Yrno) Fetch(location string) ([]Update, error) {
 }
 
 // Merges updated forecast into an existing forecasts
-func (weather Yrno) MergeUpdates(existing map[time.Time]DayForecast, updates []Update) map[time.Time]DayForecast {
-	var results map[time.Time]DayForecast = make(map[time.Time]DayForecast)
-
+func (weather yrno) MergeUpdates(existing map[time.Time]DayForecast, updates []Update) {
 	for _, update := range updates {
 		period := update.Period
 		updated := update.Updated
-		temp := update.Temperature
 
 		// apply updates to in memory struct
 		if current, ok := existing[update.Date]; ok {
-			// store update forecast
-			current.Forecasts[period].History[updated] = temp
-			results[update.Date] = current
+			// store update forecast with updated temperattures
+			current.Forecasts[period].History[updated] = update.Temperature
 		} else {
-			// inititialize struct
+			// add new forecast dta
 			current := DayForecast{
 				update.Date,
 				make(map[int]Forecast),
@@ -72,17 +68,14 @@ func (weather Yrno) MergeUpdates(existing map[time.Time]DayForecast, updates []U
 			current.Forecasts[update.Period] = Forecast{
 				make(map[time.Time]int),
 			}
-			// store new forecasts
-			current.Forecasts[period].History[updated] = temp
-			results[update.Date] = current
+			current.Forecasts[period].History[updated] = update.Temperature
+			existing[update.Date] = current
 		}
 	}
-
-	return results
 }
 
 // Extract current forecasts from XML
-func parseXml(r io.Reader) []Update {
+func parseXML(r io.Reader) []Update {
 	log.Print("Parsing XML file...")
 
 	root, err := xmlpath.Parse(r)
@@ -99,7 +92,7 @@ func parseXml(r io.Reader) []Update {
 	tempPath := xmlpath.MustCompile("./temperature/@value")
 
 	// date of forecast update
-	var updated time.Time = parseXmlDate(applyXPath(updatedPath, root))
+	updated := parseXmlDate(applyXPath(updatedPath, root))
 
 	var results []Update
 	iter := timePath.Iter(root)
@@ -118,14 +111,14 @@ func parseXml(r io.Reader) []Update {
 }
 
 func applyXPath(path *xmlpath.Path, node *xmlpath.Node) string {
-	var result string = ""
+	var result string
 	if value, ok := path.String(node); ok {
 		result = value
 	}
 	return result
 }
 
-func parseXmlDate(input string) time.Time {
+func parseXMLDate(input string) time.Time {
 	t, err := time.Parse("2006-01-02T15:04:05", input)
 	if err != nil {
 		log.Print(err)
