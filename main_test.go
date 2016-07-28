@@ -1,12 +1,10 @@
 package main
 
 import (
-	//	"net/http/httptest"
-	//	"strings"
-	//"reflect"
+	"fmt"
 	"os"
 	"testing"
-	//	"time"
+	"time"
 )
 
 func TestHistory(t *testing.T) {
@@ -33,7 +31,6 @@ func TestHistory(t *testing.T) {
 
 func TestYrno(t *testing.T) {
 	var weather = new(Yrno)
-	//var updates []Update
 	var location string = "Germany/Berlin/Berlin"
 
 	updates, err := weather.Fetch(location)
@@ -43,33 +40,17 @@ func TestYrno(t *testing.T) {
 	if updates == nil || len(updates) == 0 {
 		t.Fatal("No forecast data for %s", location)
 	}
-	t.Log(updates)
-}
 
-// statusHandler is an http.Handler that writes an empty response using itself
-// as the response status code.
-/*
-type statusHandler int
-
-func (h *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(int(*h))
-}
-
-func TestParseXml(t *testing.T) {
-	r, err := os.Open("./data/test/data.xml")
-	if err != nil {
-		t.Fatal(err)
+	//TODO: test merging
+	existing := make(map[time.Time]DayForecast)
+	weather.MergeUpdates(existing, updates)
+	if existing == nil || len(existing) == 0 {
+		t.Fatal("Unable to merge changes!", err)
 	}
-	results := parseXml(r)
-
-		if reflect.TypeOf(results).Kind() != reflect.slice {
-			log.Print("Not a slice")
-		}
-	fmt.Println(reflect.TypeOf(results))
-	fmt.Println(reflect.TypeOf(results).Kind())
-	fmt.Println(reflect.TypeOf(results[0]))
+	fmt.Println(existing)
 }
 
+/*
 func TestIntegration(t *testing.T) {
 	status := statusHandler(http.StatusNotFound)
 	ts := httptest.NewServer(&status)

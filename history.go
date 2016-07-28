@@ -8,11 +8,11 @@ import (
 
 const storagePath = "./data/history.gob"
 
-type ForecastHistory struct {
+type forecastHistory struct {
 }
 
 // Encode historical data via Gob to file
-func (history ForecastHistory) Store(object interface{}) error {
+func (history forecastHistory) Store(object interface{}) error {
 	log.Print("Storing historic data....")
 	file, err := os.Create(storagePath)
 	if err == nil {
@@ -25,7 +25,7 @@ func (history ForecastHistory) Store(object interface{}) error {
 }
 
 // Decode historical data via Gob from file
-func (history ForecastHistory) Load(object interface{}) error {
+func (history forecastHistory) Load(object interface{}) error {
 	log.Print("Loading historic data....")
 	file, err := os.Open(storagePath)
 	if err == nil {
@@ -36,6 +36,6 @@ func (history ForecastHistory) Load(object interface{}) error {
 	return err
 }
 
-func (history ForecastHistory) Path() string {
+func (history forecastHistory) Path() string {
 	return storagePath
 }
