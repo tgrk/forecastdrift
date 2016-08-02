@@ -19,19 +19,28 @@ import (
 	"time"
 )
 
+import _ "net/http/pprof"
+
 var (
 	// CLI flags
-	httpPort   = flag.String("port", ":8080", "Listen port")
+	httpPort = flag.String("port", ":8080", "Listen port")
+	location = flag.String("location", "Germany/Berlin/Berlin", "Location")
+	gzipMode = flag.Bool("gzip", true, "GZip Compression")
+
+	// yr.no polite polling policy
 	pollPeriod = flag.Duration("poll", 10*60*time.Second, "Poll period")
-	location   = flag.String("location", "Germany/Berlin/Berlin", "Location")
-	gzipMode   = flag.Bool("gzip", true, "GZip Compression")
 
 	// stores in memory as map with forecast day as a key
-	forecasts map[time.Time]DayForecast = make(map[time.Time]DayForecast)
+	forecasts = make(map[time.Time]DayForecast)
+
+	weather = new(Yrno)
 )
 
 func main() {
 	flag.Parse()
+
+	// first load current forecast
+	pollUpdates(*location)
 
 	// Ops API
 	iris.Get("/ping", func(ctx *iris.Context) {
@@ -64,14 +73,34 @@ func main() {
 		ctx.ServeFile("docroot/index.html", *gzipMode)
 	})
 
+	//TODO: implement exponential backoff in ase API is down
+	// periodically fetch weather forecast updates
+	log.Printf("Ticker: polling every %s", *pollPeriod)
+	ticker := time.NewTicker(*pollPeriod)
+	quit := make(chan bool, 1)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				pollUpdates(*location)
+			case <-quit:
+				log.Println("Ticker: stop")
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
 	iris.Listen(*httpPort)
 }
 
 // Filter forecast data for particular day by offset
+/*
 func filterForecast(offset float64) []Forecast {
 	var result []Forecast
 	return result
 }
+*/
 
 // Parse QS for forecast date or use current date
 func getQueryDate(qs string) time.Time {
@@ -86,8 +115,13 @@ func getQueryDate(qs string) time.Time {
 	return time.Now()
 }
 
-func maybeLogError(e error) {
-	if e != nil {
-		log.Print(e)
+func pollUpdates(location string) {
+	// first fetch updates
+	updates, err := weather.Fetch(location)
+	if err != nil {
+		log.Fatalf("Unable to fetch forecast for %s", location)
 	}
+
+	// merge fetched updates
+	weather.Merge(forecasts, updates)
 }
