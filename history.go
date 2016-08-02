@@ -8,11 +8,12 @@ import (
 
 const storagePath = "./data/history.gob"
 
-type forecastHistory struct {
+// ForecastHistory is responsible for GOB persistance
+type ForecastHistory struct {
 }
 
-// Encode historical data via Gob to file
-func (history forecastHistory) Store(object interface{}) error {
+// Store historical data via Gob to file
+func (history ForecastHistory) Store(object interface{}) error {
 	log.Print("Storing historic data....")
 	file, err := os.Create(storagePath)
 	if err == nil {
@@ -24,8 +25,8 @@ func (history forecastHistory) Store(object interface{}) error {
 	return err
 }
 
-// Decode historical data via Gob from file
-func (history forecastHistory) Load(object interface{}) error {
+// Load historical data via Gob from file
+func (history ForecastHistory) Load(object interface{}) error {
 	log.Print("Loading historic data....")
 	file, err := os.Open(storagePath)
 	if err == nil {
@@ -36,6 +37,7 @@ func (history forecastHistory) Load(object interface{}) error {
 	return err
 }
 
-func (history forecastHistory) Path() string {
+// Path to GOB persistance file
+func (history ForecastHistory) Path() string {
 	return storagePath
 }
