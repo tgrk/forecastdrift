@@ -8,7 +8,7 @@ import (
 )
 
 func TestHistory(t *testing.T) {
-	var testPayload string = "Hello World!"
+	var testPayload = "Hello World!"
 
 	var history = new(ForecastHistory)
 	res := history.Store("Hello Brave New World!")
@@ -31,7 +31,7 @@ func TestHistory(t *testing.T) {
 
 func TestYrno(t *testing.T) {
 	var weather = new(Yrno)
-	var location string = "Germany/Berlin/Berlin"
+	var location = "Germany/Berlin/Berlin"
 
 	updates, err := weather.Fetch(location)
 	if err != nil {
@@ -41,12 +41,27 @@ func TestYrno(t *testing.T) {
 		t.Fatal("No forecast data for %s", location)
 	}
 
-	//TODO: test merging
+	// merge fetched updates
 	existing := make(map[time.Time]DayForecast)
-	weather.MergeUpdates(existing, updates)
+	weather.Merge(existing, updates)
 	if existing == nil || len(existing) == 0 {
 		t.Fatal("Unable to merge changes!", err)
 	}
+
+	// merge one new update
+	var newUpdates []Update
+	newUpdates[0] = Update{
+		time.Now(),
+		time.Now(),
+		0,
+		30,
+	}
+
+	fmt.Println(newUpdates)
+	//weather.Merge(existing, newUpdates)
+
+	// TODO: merge an existing update
+
 	fmt.Println(existing)
 }
 
