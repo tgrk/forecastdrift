@@ -23,4 +23,5 @@ _testmain.go
 *.prof
 
 data/history.gob
+docroot/elm-stuff/
 docroot/node_modules/
