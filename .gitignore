@@ -19,10 +19,8 @@ _cgo_export.*
 
 _testmain.go
 
-*.exe
 *.test
 *.prof
 
 data/history.gob
-docroot/assets/
-elm-stuff/
+docroot/node_modules/
