@@ -16,12 +16,12 @@ type ForecastHistory struct {
 func (history ForecastHistory) Store(object interface{}) error {
 	log.Print("Storing historic data....")
 	file, err := os.Create(storagePath)
+	defer file.Close()
 	if err == nil {
 		encoder := gob.NewEncoder(file)
 		encoder.Encode(object)
 		return nil
 	}
-	file.Close()
 	return err
 }
 
@@ -29,11 +29,11 @@ func (history ForecastHistory) Store(object interface{}) error {
 func (history ForecastHistory) Load(object interface{}) error {
 	log.Print("Loading historic data....")
 	file, err := os.Open(storagePath)
+	defer file.Close()
 	if err == nil {
 		decoder := gob.NewDecoder(file)
 		err = decoder.Decode(object)
 	}
-	file.Close()
 	return err
 }
 
