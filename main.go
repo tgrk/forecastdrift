@@ -75,14 +75,6 @@ func main() {
 	// first load current forecast
 	pollUpdates(*location)
 
-	// register router based on defined routing schema
-	router := NewRouter()
-
-	// register static assets handler
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir(docroot)))
-
-	log.Fatal(http.ListenAndServe(*httpPort, router))
-
 	// periodically fetch weather forecast updates
 	log.Printf("Ticker: polling every %s", *pollPeriod)
 	ticker := time.NewTicker(*pollPeriod)
@@ -99,6 +91,14 @@ func main() {
 			}
 		}
 	}()
+
+	// register router based on defined routing schema
+	router := NewRouter()
+
+	// register static assets handler
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir(docroot)))
+
+	log.Fatal(http.ListenAndServe(*httpPort, router))
 }
 
 func APIWeather(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +168,7 @@ func pollUpdates(location string) {
 		log.Fatalf("Unable to fetch forecast for %s - %s", location, err)
 	}
 
-	log.Println("Ticker: pulling latest forecasts...")
+	log.Println("Ticker: polling latest forecasts...")
 
 	// merge fetched updates
 	weather.Merge(forecasts, updates)
