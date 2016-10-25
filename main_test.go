@@ -20,7 +20,6 @@ func TestHistory(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to load stored payload!")
 	}
-
 	if testPayload != "Hello Brave New World!" {
 		t.Error("Unexpected value after restoring hisotry!")
 	}
@@ -49,12 +48,13 @@ func TestYrno(t *testing.T) {
 	}
 
 	// merge one new update
-	var newUpdates []Update
-	newUpdates[0] = Update{
-		time.Now(),
-		time.Now(),
-		0,
-		30,
+	var newUpdates = []Update{
+		Update{
+			time.Now(),
+			time.Now(),
+			0,
+			30,
+		},
 	}
 
 	fmt.Println(newUpdates)

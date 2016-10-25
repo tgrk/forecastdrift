@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"launchpad.net/xmlpath"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"launchpad.net/xmlpath"
 )
 
 const baseURL = "http://www.yr.no/sted/%s/varsel.xml"
