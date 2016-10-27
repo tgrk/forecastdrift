@@ -19,12 +19,13 @@ type Yrno struct {
 
 // DayForecast contains weather forecast by date with history of temperatures
 type DayForecast struct {
-	Date      time.Time        // same as key of in memory map
-	Forecasts map[int]forecast // contains day periods 0 - 3 by six hours
+	Date      time.Time            // same as key of in memory map
+	Forecasts map[int]Measurements // contains day periods 0 - 3 by six hours
 }
 
-type forecast struct {
-	History map[time.Time]int // contains forecasted temperature in time
+// Contains forecasted temperature measurements in time
+type Measurements struct {
+	History map[time.Time]int
 }
 
 // Update from yr.no after parsing XML data
@@ -67,9 +68,9 @@ func (weather Yrno) Merge(existing map[time.Time]DayForecast, updates []Update) 
 			// add new forecast dta
 			current := DayForecast{
 				update.Date,
-				make(map[int]forecast),
+				make(map[int]Measurements),
 			}
-			current.Forecasts[update.Period] = forecast{
+			current.Forecasts[update.Period] = Measurements{
 				make(map[time.Time]int),
 			}
 			current.Forecasts[period].History[updated] = update.Temperature

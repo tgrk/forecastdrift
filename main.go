@@ -10,13 +10,14 @@ TODO: - create simple SPA website using D3.js for data visualization
 package main
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -32,10 +33,16 @@ type APIRoute struct {
 type APIRoutes []APIRoute
 
 // Weather Forecast to be served as JSON
+type WeatherForecasts struct {
+	Date      time.Time         `json:"date"`
+	Location  string            `json:"location"`
+	Forecasts []WeatherForecast `json:"forecasts"`
+}
+
+// Weather Forecast for a particular day
 type WeatherForecast struct {
-	Date     time.Time `json:"date"`
-	Location string    `json:"location"`
-	Periods  []Period  `json:"periods"`
+	Date    time.Time `json:"date"`
+	Periods []Period  `json:"periods"`
 }
 
 // Day period with history of temperature measurements
@@ -61,16 +68,36 @@ var (
 	// stores in memory as map with forecast day as a key
 	forecasts = make(map[time.Time]DayForecast)
 
-	// access YR.NO weather forecast information
+	// init helper modules for weather parsing and persistance
 	weather = new(Yrno)
+	history = new(ForecastHistory)
 
 	// location of static assets including index page
 	docroot = "./docroot/"
 )
 
+func init() {
+	gob.Register(forecasts)
+
+	// check if persistance file exists and create empty one if not and
+	// try persist empty struct for the first time
+	if _, err := os.Stat(history.Path()); os.IsNotExist(err) {
+		err := history.Store(&forecasts)
+		if err != nil {
+			log.Fatalf("Unable to create persitance file on init - %s", err)
+		}
+	}
+}
+
 func main() {
 	// parse CLI arguments
 	flag.Parse()
+
+	// load persisted forecasts to memory
+	err := history.Load(&forecasts)
+	if err != nil {
+		log.Fatalf("Unable to load persisted forecasts to memory  - %s", err)
+	}
 
 	// first load current forecast
 	pollUpdates(*location)
@@ -98,6 +125,8 @@ func main() {
 	// register static assets handler
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(docroot)))
 
+	log.Printf("Starting HTTP server - http://localhost:%s/", *httpPort)
+
 	log.Fatal(http.ListenAndServe(*httpPort, router))
 }
 
@@ -107,9 +136,7 @@ func APIWeather(w http.ResponseWriter, r *http.Request) {
 
 	// parser user supplied date
 	queryDate := getQueryDate(date)
-	duration := time.Now().Sub(queryDate)
-	offset := math.Floor(duration.Hours() / 24)
-	log.Printf("Querying for date %s - offset=%f", queryDate, offset)
+	log.Printf("Querying for date %s", queryDate)
 
 	// server JSON response
 	w.Header().Set("Content-Type", "application/json")
@@ -128,20 +155,23 @@ func APIWeather(w http.ResponseWriter, r *http.Request) {
 }
 
 // Filter forecast data for particular day by offset
-func filterForecast(queryTime time.Time) WeatherForecast {
+func filterForecast(queryTime time.Time) WeatherForecasts {
+	var measurements []Measurement
 	var periods []Period
-	var result = WeatherForecast{
-		Date:    queryTime.Truncate(24 * time.Hour),
-		Periods: periods,
+
+	// create top level struct
+	var result = WeatherForecasts{
+		Date:      queryTime.Truncate(24 * time.Hour),
+		Forecasts: []WeatherForecast{},
 	}
 
-	var measurements []Measurement
-	for t, weather := range forecasts {
-		// create response structure only with data that we need based on query date
-		if queryTime.Truncate(24 * time.Hour).Equal(t.Truncate(24 * time.Hour)) {
-			for period, forecast := range weather.Forecasts {
-				// transform all measurements
-				measurements = measurements[:0]
+	for date, day := range forecasts {
+		// display forecast for specified date and future
+		if date.Truncate(24 * time.Hour).After(queryTime.Truncate(24 * time.Hour)) {
+			periods = periods[:0]
+
+			// transform all measurements
+			for period, forecast := range day.Forecasts {
 				period := Period{
 					Period:       period,
 					Measurements: measurements[:0],
@@ -153,8 +183,14 @@ func filterForecast(queryTime time.Time) WeatherForecast {
 					}
 					period.Measurements = append(period.Measurements, measurement)
 				}
-				result.Periods = append(result.Periods, period)
+				periods = append(periods, period)
 			}
+
+			// finally append whole forecast for a day
+			result.Forecasts = append(result.Forecasts, WeatherForecast{
+				Date:    date.Truncate(24 * time.Hour),
+				Periods: periods,
+			})
 		}
 	}
 	return result
@@ -172,6 +208,12 @@ func pollUpdates(location string) {
 
 	// merge fetched updates
 	weather.Merge(forecasts, updates)
+
+	// persist fetched data periodically too
+	err = history.Store(&forecasts)
+	if err != nil {
+		log.Fatalf("Unable to persist forecasts after merging updates  - %s", err)
+	}
 }
 
 // Parse QS for forecast date or use current date
