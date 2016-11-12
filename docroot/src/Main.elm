@@ -7,7 +7,7 @@ import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Utils
-
+import Time exposing (Time)
 
 main : Program Never
 main =
@@ -22,9 +22,10 @@ main =
 
 -- Model
 
-
 type alias Model =
-    { name : String }
+    { selectedDate : Maybe Date,
+      location     : String,
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -34,7 +35,6 @@ init =
 
 
 -- Update
-
 
 type Msg
     = NoOp
@@ -50,16 +50,14 @@ update msg model =
 
 -- View
 
-
 view : Model -> Html Msg
 view model =
     h1 []
-        [ text ("Hello " ++ (Utils.capitalize model.name)) ]
+        [ text ("Query date :" ++ (Utils.capitalize model.name)) ]
 
 
 
 -- Subscriptions
-
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
